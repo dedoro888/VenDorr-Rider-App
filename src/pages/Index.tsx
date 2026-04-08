@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import OnlineToggle from "@/components/rider/OnlineToggle";
 import EarningsCard from "@/components/rider/EarningsCard";
 import MapPreview from "@/components/rider/MapPreview";
@@ -8,12 +9,12 @@ import BottomNav from "@/components/rider/BottomNav";
 const Index = () => {
   const [isOnline, setIsOnline] = useState(false);
   const [showOrder, setShowOrder] = useState(false);
+  const navigate = useNavigate();
 
   const handleToggle = () => {
     const next = !isOnline;
     setIsOnline(next);
     if (next) {
-      // Simulate order after 3s
       setTimeout(() => setShowOrder(true), 3000);
     } else {
       setShowOrder(false);
@@ -22,8 +23,8 @@ const Index = () => {
 
   const handleAccept = useCallback(() => {
     setShowOrder(false);
-    // Navigate to active delivery in real app
-  }, []);
+    navigate("/delivery");
+  }, [navigate]);
 
   const handleDecline = useCallback(() => {
     setShowOrder(false);
