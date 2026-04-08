@@ -1,109 +1,180 @@
 import { useState } from "react";
-import { ArrowLeft, Phone, MessageSquare, MapPin, Navigation } from "lucide-react";
+import { ArrowLeft, Phone, MessageSquare, MapPin, Navigation, Clock, Route, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 import DeliveryStatus, { type Stage } from "@/components/rider/DeliveryStatus";
+import GoogleMapView from "@/components/rider/GoogleMapView";
 import BottomNav from "@/components/rider/BottomNav";
 
 const stageFlow: Stage[] = ["assigned", "at_vendor", "picked_up", "delivering", "completed"];
 const stageButtons: Record<Stage, string> = {
-  assigned: "Arrived at Vendor",
-  at_vendor: "Picked Up Order",
-  picked_up: "On the Way",
-  delivering: "Delivered",
+  assigned: "Navigate to Vendor",
+  at_vendor: "Arrived at Vendor",
+  picked_up: "Confirm Pickup",
+  delivering: "Mark as Delivered",
   completed: "Done",
 };
+
+const stageDescriptions: Record<Stage, string> = {
+  assigned: "Head to Chicken Republic to pick up the order",
+  at_vendor: "Confirm you've arrived at the vendor",
+  picked_up: "Verify you have all items before leaving",
+  delivering: "Navigate to the customer's location",
+  completed: "Delivery complete!",
+};
+
+// Mock locations
+const vendorLocation = { lat: 6.5264, lng: 3.3772 };
+const customerLocation = { lat: 6.5224, lng: 3.3832 };
+const riderLocation = { lat: 6.5244, lng: 3.3792 };
+
+const orderItems = [
+  { name: "Chicken & Chips (Large)", qty: 1 },
+  { name: "Jollof Rice Special", qty: 1 },
+  { name: "Pepsi 50cl", qty: 2 },
+];
 
 const ActiveDelivery = () => {
   const [stageIndex, setStageIndex] = useState(0);
   const currentStage = stageFlow[stageIndex];
   const isCompleted = currentStage === "completed";
+  const isPastPickup = stageIndex >= 2;
 
   const advance = () => {
     if (stageIndex < stageFlow.length - 1) setStageIndex(prev => prev + 1);
   };
 
+  // Map markers based on current stage
+  const getMarkers = () => {
+    const markers = [];
+    if (!isCompleted) {
+      markers.push({ position: riderLocation, color: "primary" as const, label: "You" });
+    }
+    if (stageIndex < 3) {
+      markers.push({ position: vendorLocation, color: "earnings" as const, label: "P" });
+    }
+    if (stageIndex >= 2) {
+      markers.push({ position: customerLocation, color: "urgent" as const, label: "D" });
+    }
+    return markers;
+  };
+
+  // Dynamic map center
+  const mapCenter = stageIndex < 2 ? vendorLocation : customerLocation;
+
   return (
     <div className="min-h-screen pb-24 bg-background">
       {/* Map area */}
-      <div className="relative h-[45vh] bg-card border-b border-border">
+      <div className="relative h-[40vh] border-b border-border">
         <Link to="/" className="absolute top-5 left-4 z-10 w-10 h-10 rounded-full bg-card/90 backdrop-blur flex items-center justify-center border border-border">
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </Link>
 
-        {/* Simulated map */}
-        <div className="absolute inset-0 opacity-15">
-          <svg width="100%" height="100%" className="text-muted-foreground">
-            {Array.from({ length: 20 }).map((_, i) => (
-              <line key={`h${i}`} x1="0" y1={i * 20} x2="100%" y2={i * 20} stroke="currentColor" strokeWidth="0.5" />
-            ))}
-            {Array.from({ length: 30 }).map((_, i) => (
-              <line key={`v${i}`} x1={i * 20} y1="0" x2={i * 20} y2="100%" stroke="currentColor" strokeWidth="0.5" />
-            ))}
-          </svg>
+        {/* ETA badge */}
+        <div className="absolute top-5 right-4 z-10 bg-card/90 backdrop-blur border border-border rounded-full px-3 py-1.5 flex items-center gap-1.5">
+          <Clock className="w-3.5 h-3.5 text-primary" />
+          <span className="text-xs font-semibold text-foreground">
+            {isCompleted ? "Done" : stageIndex < 2 ? "4 min" : "8 min"}
+          </span>
         </div>
 
-        {/* Route markers */}
-        <div className="absolute top-1/3 left-1/4 flex flex-col items-center">
-          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-            <MapPin className="w-4 h-4 text-primary" />
-          </div>
-          <span className="text-[9px] text-primary font-medium mt-1">Pickup</span>
-        </div>
-        <div className="absolute bottom-1/3 right-1/4 flex flex-col items-center">
-          <div className="w-8 h-8 rounded-full bg-urgent/20 flex items-center justify-center">
-            <Navigation className="w-4 h-4 text-urgent" />
-          </div>
-          <span className="text-[9px] text-urgent font-medium mt-1">Drop-off</span>
-        </div>
+        <GoogleMapView
+          className="h-full"
+          center={mapCenter}
+          zoom={15}
+          markers={getMarkers()}
+        />
 
-        {/* Dotted route */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none">
-          <line x1="30%" y1="38%" x2="72%" y2="62%" stroke="hsl(145,65%,42%)" strokeWidth="2" strokeDasharray="6 4" opacity="0.5" />
-        </svg>
+        {/* Distance ribbon */}
+        {!isCompleted && (
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 bg-card/90 backdrop-blur border border-border rounded-full px-4 py-2 flex items-center gap-2">
+            <Route className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm font-semibold text-foreground">
+              {stageIndex < 2 ? "1.2 km to vendor" : "2.4 km to customer"}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Order details */}
       <div className="px-5 -mt-4 relative z-10">
-        <div className="bg-card rounded-2xl border border-border p-5 shadow-lg">
+        <div className="bg-card rounded-2xl border border-border p-5 shadow-lg space-y-5">
           {/* Progress tracker */}
-          <div className="mb-5">
-            <DeliveryStatus currentStage={currentStage} />
+          <DeliveryStatus currentStage={currentStage} />
+
+          {/* Stage instruction */}
+          <div className="bg-secondary/50 rounded-xl px-4 py-3">
+            <p className="text-xs text-muted-foreground">Next step</p>
+            <p className="text-sm font-semibold text-foreground">{stageDescriptions[currentStage]}</p>
           </div>
 
-          {/* Details */}
-          <div className="space-y-3 mb-5">
-            <div className="flex justify-between items-center">
+          {/* Vendor info */}
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                <MapPin className="w-5 h-5 text-primary" />
+              </div>
               <div>
                 <p className="text-xs text-muted-foreground">Vendor</p>
                 <p className="text-sm font-semibold text-foreground">Chicken Republic</p>
-              </div>
-              <div className="flex gap-2">
-                <button className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center active:animate-press">
-                  <Phone className="w-4 h-4 text-secondary-foreground" />
-                </button>
-                <button className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center active:animate-press">
-                  <MessageSquare className="w-4 h-4 text-secondary-foreground" />
-                </button>
+                <p className="text-xs text-muted-foreground">SUB, Main Campus</p>
               </div>
             </div>
+            <button className="thumb-zone w-10 h-10 rounded-full bg-secondary flex items-center justify-center active:animate-press">
+              <Phone className="w-4 h-4 text-secondary-foreground" />
+            </button>
+          </div>
 
-            <div className="h-px bg-border" />
+          <div className="h-px bg-border" />
 
-            <div className="flex justify-between items-center">
+          {/* Customer info */}
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-urgent/15 flex items-center justify-center shrink-0">
+                <Navigation className="w-5 h-5 text-urgent" />
+              </div>
               <div>
                 <p className="text-xs text-muted-foreground">Customer</p>
                 <p className="text-sm font-semibold text-foreground">Adewale J.</p>
-              </div>
-              <div className="flex gap-2">
-                <button className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center active:animate-press">
-                  <Phone className="w-4 h-4 text-secondary-foreground" />
-                </button>
+                <p className="text-xs text-muted-foreground">Hall 3, Room 214</p>
               </div>
             </div>
+            <div className="flex gap-2">
+              <button className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center active:animate-press">
+                <Phone className="w-4 h-4 text-secondary-foreground" />
+              </button>
+              <button className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center active:animate-press">
+                <MessageSquare className="w-4 h-4 text-secondary-foreground" />
+              </button>
+            </div>
+          </div>
 
-            <div className="text-right">
-              <span className="text-xs text-muted-foreground">Hall 3, Room 214</span>
+          <div className="h-px bg-border" />
+
+          {/* Order items */}
+          <div>
+            <p className="text-xs text-muted-foreground mb-2">Order Items</p>
+            <div className="space-y-1.5">
+              {orderItems.map((item, i) => (
+                <div key={i} className="flex justify-between items-center">
+                  <span className="text-sm text-foreground">{item.name}</span>
+                  <span className="text-xs text-muted-foreground">×{item.qty}</span>
+                </div>
+              ))}
             </div>
+          </div>
+
+          {/* Cannot cancel warning */}
+          {isPastPickup && !isCompleted && (
+            <div className="flex items-center gap-2 bg-urgent/10 rounded-xl px-3 py-2">
+              <AlertTriangle className="w-4 h-4 text-urgent shrink-0" />
+              <span className="text-xs text-urgent font-medium">Order picked up — cannot cancel or reassign</span>
+            </div>
+          )}
+
+          {/* Earnings */}
+          <div className="flex items-center justify-between bg-earnings/10 rounded-xl px-4 py-3">
+            <span className="text-sm text-muted-foreground">Earnings</span>
+            <span className="text-lg font-bold text-earnings">₦650</span>
           </div>
 
           {/* Action button */}
@@ -121,6 +192,20 @@ const ActiveDelivery = () => {
             >
               ₦650 Earned — Back to Home
             </Link>
+          )}
+
+          {/* Safety row */}
+          {!isCompleted && (
+            <div className="flex justify-center gap-6 pt-1">
+              <button className="flex items-center gap-1.5 text-xs text-muted-foreground active:text-foreground">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                Report Issue
+              </button>
+              <button className="flex items-center gap-1.5 text-xs text-destructive active:text-destructive/80">
+                <Phone className="w-3.5 h-3.5" />
+                Emergency
+              </button>
+            </div>
           )}
         </div>
       </div>
