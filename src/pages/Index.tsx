@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Bell, MapPin, Navigation, Sliders } from "lucide-react";
+import { Bell, MapPin, Navigation, Sliders, Clock, Banknote } from "lucide-react";
 import OnlineToggle from "@/components/rider/OnlineToggle";
 import MapPreview from "@/components/rider/MapPreview";
 import IncomingOrder from "@/components/rider/IncomingOrder";
@@ -8,10 +8,10 @@ import DeliveryRangeSelector from "@/components/rider/DeliveryRangeSelector";
 import BottomNav from "@/components/rider/BottomNav";
 
 const nearbyDeliveries = [
-  { id: 1, vendor: "Chicken Republic", pickup: "SUB, Main Campus", dropoff: "Hall 3", distance: "2.4 km", earning: 650 },
-  { id: 2, vendor: "Kilimanjaro", pickup: "Junction Road", dropoff: "Faculty Block A", distance: "1.8 km", earning: 500 },
-  { id: 3, vendor: "Sweet Sensation", pickup: "Gate Area", dropoff: "Hall 5", distance: "3.1 km", earning: 750 },
-  { id: 4, vendor: "The Place", pickup: "Central Cafe", dropoff: "Hall 1", distance: "1.2 km", earning: 400 },
+  { id: 1, vendor: "Chicken Republic", pickup: "SUB, Main Campus", dropoff: "Hall 3, Room 214", distance: "2.4 km", earning: 650, estimatedTime: "12 min", items: "2 meals" },
+  { id: 2, vendor: "Kilimanjaro", pickup: "Junction Road", dropoff: "Faculty Block A, Office 3", distance: "1.8 km", earning: 500, estimatedTime: "8 min", items: "1 shawarma" },
+  { id: 3, vendor: "Sweet Sensation", pickup: "Gate Area", dropoff: "Hall 5, Ground Floor", distance: "3.1 km", earning: 750, estimatedTime: "15 min", items: "3 items" },
+  { id: 4, vendor: "The Place", pickup: "Central Cafe", dropoff: "Hall 1, Room 102", distance: "1.2 km", earning: 400, estimatedTime: "6 min", items: "1 meal" },
 ];
 
 const Index = () => {
@@ -20,6 +20,7 @@ const Index = () => {
   const [showRange, setShowRange] = useState(false);
   const [deliveryRange, setDeliveryRange] = useState(5);
   const [alertCount] = useState(3);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
   const navigate = useNavigate();
 
   const handleToggle = () => {
@@ -40,6 +41,11 @@ const Index = () => {
   const handleDecline = useCallback(() => {
     setShowOrder(false);
   }, []);
+
+  const handleAcceptDelivery = useCallback((id: number) => {
+    setExpandedId(null);
+    navigate("/delivery");
+  }, [navigate]);
 
   const filteredDeliveries = nearbyDeliveries.filter(d => parseFloat(d.distance) <= deliveryRange);
 
@@ -98,22 +104,62 @@ const Index = () => {
           </h2>
           <div className="space-y-2">
             {filteredDeliveries.map((d) => (
-              <button
-                key={d.id}
-                className="w-full flex items-center gap-3 p-4 bg-card rounded-xl border border-border active:animate-press text-left"
-              >
-                <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
-                  <MapPin className="w-5 h-5 text-primary" />
+              <div key={d.id} className="bg-card rounded-xl border border-border overflow-hidden transition-all duration-300">
+                <button
+                  onClick={() => setExpandedId(expandedId === d.id ? null : d.id)}
+                  className="w-full flex items-center gap-3 p-4 active:animate-press text-left"
+                >
+                  <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                    <MapPin className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{d.vendor}</p>
+                    <p className="text-xs text-muted-foreground truncate">{d.pickup} → {d.dropoff}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-bold text-earnings">₦{d.earning}</p>
+                    <p className="text-xs text-muted-foreground">{d.distance}</p>
+                  </div>
+                </button>
+
+                {/* Expanded details */}
+                <div
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                    expandedId === d.id ? "max-h-60 opacity-100" : "max-h-0 opacity-0"
+                  }`}
+                >
+                  <div className="px-4 pb-4 space-y-3 border-t border-border pt-3">
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-secondary rounded-lg p-2 text-center">
+                        <Clock className="w-3.5 h-3.5 text-muted-foreground mx-auto mb-0.5" />
+                        <p className="text-xs font-semibold text-foreground">{d.estimatedTime}</p>
+                        <p className="text-[10px] text-muted-foreground">Est. time</p>
+                      </div>
+                      <div className="bg-secondary rounded-lg p-2 text-center">
+                        <Navigation className="w-3.5 h-3.5 text-muted-foreground mx-auto mb-0.5" />
+                        <p className="text-xs font-semibold text-foreground">{d.distance}</p>
+                        <p className="text-[10px] text-muted-foreground">Distance</p>
+                      </div>
+                      <div className="bg-secondary rounded-lg p-2 text-center">
+                        <Banknote className="w-3.5 h-3.5 text-earnings mx-auto mb-0.5" />
+                        <p className="text-xs font-semibold text-earnings">₦{d.earning}</p>
+                        <p className="text-[10px] text-muted-foreground">Earning</p>
+                      </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      <p><span className="font-medium text-foreground">Pickup:</span> {d.pickup}</p>
+                      <p><span className="font-medium text-foreground">Drop-off:</span> {d.dropoff}</p>
+                      <p><span className="font-medium text-foreground">Items:</span> {d.items}</p>
+                    </div>
+                    <button
+                      onClick={() => handleAcceptDelivery(d.id)}
+                      className="thumb-zone w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold text-base active:animate-press transition-colors"
+                    >
+                      Accept Delivery
+                    </button>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground truncate">{d.vendor}</p>
-                  <p className="text-xs text-muted-foreground truncate">{d.pickup} → {d.dropoff}</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="text-sm font-bold text-earnings">₦{d.earning}</p>
-                  <p className="text-xs text-muted-foreground">{d.distance}</p>
-                </div>
-              </button>
+              </div>
             ))}
           </div>
           {filteredDeliveries.length === 0 && (

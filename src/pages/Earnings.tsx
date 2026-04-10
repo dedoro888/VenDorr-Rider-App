@@ -124,7 +124,7 @@ const Earnings = () => {
         </div>
 
         <div className="bg-card rounded-2xl border border-border p-4">
-          <ResponsiveContainer width="100%" height={180}>
+          <ResponsiveContainer width="100%" height={220}>
             <BarChart data={chartData}>
               <XAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(215 15% 55%)" }} axisLine={false} tickLine={false} />
               <YAxis hide />
@@ -138,7 +138,7 @@ const Earnings = () => {
                 }}
                 formatter={(value: number) => [`₦${value.toLocaleString()}`, "Earnings"]}
               />
-              <Bar dataKey="amount" fill="hsl(145 65% 42%)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="amount" fill="hsl(145 65% 42%)" radius={[4, 4, 0, 0]} label={{ position: "top", fontSize: 9, fill: "hsl(215 15% 55%)", formatter: (v: number) => `₦${v >= 1000 ? `${(v/1000).toFixed(v >= 10000 ? 0 : 1)}k` : v}` }} />
             </BarChart>
           </ResponsiveContainer>
         </div>
