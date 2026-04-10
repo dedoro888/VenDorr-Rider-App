@@ -1,10 +1,9 @@
-import { Home, Wallet, Bell, User } from "lucide-react";
+import { Home, Wallet, User } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 
 const tabs = [
   { path: "/", icon: Home, label: "Home" },
   { path: "/earnings", icon: Wallet, label: "Earnings" },
-  { path: "/notifications", icon: Bell, label: "Alerts" },
   { path: "/profile", icon: User, label: "Profile" },
 ];
 
