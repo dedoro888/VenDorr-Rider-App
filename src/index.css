@@ -54,6 +54,43 @@
     --surface-elevated: 220 16% 17%;
     --glow-primary: 0 0% 0% / 0;
   }
+
+  .light {
+    --background: 0 0% 97%;
+    --foreground: 220 20% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
+
+    --primary: 145 65% 38%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 10% 92%;
+    --secondary-foreground: 220 15% 30%;
+
+    --muted: 220 10% 94%;
+    --muted-foreground: 220 10% 45%;
+
+    --accent: 40 90% 50%;
+    --accent-foreground: 220 20% 10%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 10% 88%;
+    --input: 220 10% 88%;
+    --ring: 145 65% 38%;
+
+    --earnings: 40 90% 48%;
+    --earnings-foreground: 220 20% 10%;
+    --online: 145 65% 38%;
+    --offline: 215 10% 55%;
+    --urgent: 25 95% 50%;
+    --surface-elevated: 0 0% 100%;
+  }
 }
 
 @layer base {
@@ -64,6 +101,7 @@
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', sans-serif;
     -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 }
 
