@@ -6,26 +6,29 @@ import MapPreview from "@/components/rider/MapPreview";
 import IncomingOrder from "@/components/rider/IncomingOrder";
 import DeliveryRangeSelector from "@/components/rider/DeliveryRangeSelector";
 import BottomNav from "@/components/rider/BottomNav";
+import DeliveryFilters, { type DeliveryFilter } from "@/components/rider/DeliveryFilters";
+import { useRider } from "@/contexts/RiderContext";
 
 const nearbyDeliveries = [
-  { id: 1, vendor: "Chicken Republic", pickup: "SUB, Main Campus", dropoff: "Hall 3, Room 214", distance: "2.4 km", earning: 650, estimatedTime: "12 min", items: "2 meals" },
-  { id: 2, vendor: "Kilimanjaro", pickup: "Junction Road", dropoff: "Faculty Block A, Office 3", distance: "1.8 km", earning: 500, estimatedTime: "8 min", items: "1 shawarma" },
-  { id: 3, vendor: "Sweet Sensation", pickup: "Gate Area", dropoff: "Hall 5, Ground Floor", distance: "3.1 km", earning: 750, estimatedTime: "15 min", items: "3 items" },
-  { id: 4, vendor: "The Place", pickup: "Central Cafe", dropoff: "Hall 1, Room 102", distance: "1.2 km", earning: 400, estimatedTime: "6 min", items: "1 meal" },
+  { id: 1, vendor: "Chicken Republic", pickup: "SUB, Main Campus", dropoff: "Hall 3, Room 214", distance: "2.4 km", earning: 650, estimatedTime: "12 min", items: "2 meals", scheduled: false },
+  { id: 2, vendor: "Kilimanjaro", pickup: "Junction Road", dropoff: "Faculty Block A, Office 3", distance: "1.8 km", earning: 500, estimatedTime: "8 min", items: "1 shawarma", scheduled: false },
+  { id: 3, vendor: "Sweet Sensation", pickup: "Gate Area", dropoff: "Hall 5, Ground Floor", distance: "3.1 km", earning: 750, estimatedTime: "15 min", items: "3 items", scheduled: true },
+  { id: 4, vendor: "The Place", pickup: "Central Cafe", dropoff: "Hall 1, Room 102", distance: "1.2 km", earning: 400, estimatedTime: "6 min", items: "1 meal", scheduled: false },
 ];
 
 const Index = () => {
-  const [isOnline, setIsOnline] = useState(false);
+  const { isOnline, setOnline, startDelivery } = useRider();
   const [showOrder, setShowOrder] = useState(false);
   const [showRange, setShowRange] = useState(false);
   const [deliveryRange, setDeliveryRange] = useState(5);
   const [alertCount] = useState(3);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [filter, setFilter] = useState<DeliveryFilter>("all");
   const navigate = useNavigate();
 
   const handleToggle = () => {
     const next = !isOnline;
-    setIsOnline(next);
+    setOnline(next);
     if (next) {
       setTimeout(() => setShowOrder(true), 3000);
     } else {
@@ -35,19 +38,52 @@ const Index = () => {
 
   const handleAccept = useCallback(() => {
     setShowOrder(false);
+    startDelivery({
+      orderId: `VD-${Date.now().toString().slice(-4)}`,
+      vendor: "Chicken Republic",
+      pickup: "SUB, Main Campus",
+      dropoff: "Hall 3, Room 214",
+      distance: "2.4 km",
+      earning: 650,
+    });
     navigate("/delivery");
-  }, [navigate]);
+  }, [navigate, startDelivery]);
 
   const handleDecline = useCallback(() => {
     setShowOrder(false);
   }, []);
 
-  const handleAcceptDelivery = useCallback((id: number) => {
-    setExpandedId(null);
-    navigate("/delivery");
-  }, [navigate]);
+  const handleAcceptDelivery = useCallback(
+    (d: typeof nearbyDeliveries[number]) => {
+      setExpandedId(null);
+      startDelivery({
+        orderId: `VD-${d.id}-${Date.now().toString().slice(-4)}`,
+        vendor: d.vendor,
+        pickup: d.pickup,
+        dropoff: d.dropoff,
+        distance: d.distance,
+        earning: d.earning,
+      });
+      navigate("/delivery");
+    },
+    [navigate, startDelivery]
+  );
 
-  const filteredDeliveries = nearbyDeliveries.filter(d => parseFloat(d.distance) <= deliveryRange);
+  const inRange = nearbyDeliveries.filter(d => parseFloat(d.distance) <= deliveryRange);
+  const filteredDeliveries = (() => {
+    switch (filter) {
+      case "nearby":
+        return [...inRange].sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance));
+      case "high_pay":
+        return [...inRange].sort((a, b) => b.earning - a.earning);
+      case "short_distance":
+        return inRange.filter(d => parseFloat(d.distance) <= 2);
+      case "scheduled":
+        return inRange.filter(d => d.scheduled);
+      default:
+        return inRange;
+    }
+  })();
 
   return (
     <div className="min-h-screen pb-24 bg-background">
@@ -102,6 +138,9 @@ const Index = () => {
           <h2 className="text-sm font-semibold text-foreground mb-3">
             Available Deliveries ({filteredDeliveries.length})
           </h2>
+          <div className="mb-3">
+            <DeliveryFilters active={filter} onChange={setFilter} />
+          </div>
           <div className="space-y-2">
             {filteredDeliveries.map((d) => (
               <div key={d.id} className="bg-card rounded-xl border border-border overflow-hidden transition-all duration-300">
@@ -152,7 +191,7 @@ const Index = () => {
                       <p><span className="font-medium text-foreground">Items:</span> {d.items}</p>
                     </div>
                     <button
-                      onClick={() => handleAcceptDelivery(d.id)}
+                      onClick={() => handleAcceptDelivery(d)}
                       className="thumb-zone w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold text-base active:animate-press transition-colors"
                     >
                       Accept Delivery

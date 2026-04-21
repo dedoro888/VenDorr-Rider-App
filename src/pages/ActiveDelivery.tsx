@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, Phone, MessageSquare, MapPin, Navigation, Clock, Route, AlertTriangle } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import DeliveryStatus, { type Stage } from "@/components/rider/DeliveryStatus";
 import GoogleMapView from "@/components/rider/GoogleMapView";
 import BottomNav from "@/components/rider/BottomNav";
+import { useRider } from "@/contexts/RiderContext";
 
 const stageFlow: Stage[] = ["assigned", "at_vendor", "picked_up", "delivering", "completed"];
 const stageButtons: Record<Stage, string> = {
@@ -34,13 +35,31 @@ const orderItems = [
 ];
 
 const ActiveDelivery = () => {
-  const [stageIndex, setStageIndex] = useState(0);
+  const { activeDelivery, updateDeliveryStage, endDelivery } = useRider();
+  const [stageIndex, setStageIndex] = useState(activeDelivery?.stageIndex ?? 0);
+
+  // Sync persisted stage on mount/changes
+  useEffect(() => {
+    if (activeDelivery && activeDelivery.stageIndex !== stageIndex) {
+      setStageIndex(activeDelivery.stageIndex);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeDelivery?.orderId]);
+
+  if (!activeDelivery) {
+    return <Navigate to="/" replace />;
+  }
+
   const currentStage = stageFlow[stageIndex];
   const isCompleted = currentStage === "completed";
   const isPastPickup = stageIndex >= 2;
 
   const advance = () => {
-    if (stageIndex < stageFlow.length - 1) setStageIndex(prev => prev + 1);
+    if (stageIndex < stageFlow.length - 1) {
+      const next = stageIndex + 1;
+      setStageIndex(next);
+      updateDeliveryStage(next);
+    }
   };
 
   // Map markers based on current stage
@@ -115,8 +134,8 @@ const ActiveDelivery = () => {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Vendor</p>
-                <p className="text-sm font-semibold text-foreground">Chicken Republic</p>
-                <p className="text-xs text-muted-foreground">SUB, Main Campus</p>
+                <p className="text-sm font-semibold text-foreground">{activeDelivery.vendor}</p>
+                <p className="text-xs text-muted-foreground">{activeDelivery.pickup}</p>
               </div>
             </div>
             <button className="thumb-zone w-10 h-10 rounded-full bg-secondary flex items-center justify-center active:animate-press">
@@ -134,8 +153,8 @@ const ActiveDelivery = () => {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Customer</p>
-                <p className="text-sm font-semibold text-foreground">Adewale J.</p>
-                <p className="text-xs text-muted-foreground">Hall 3, Room 214</p>
+                <p className="text-sm font-semibold text-foreground">Customer</p>
+                <p className="text-xs text-muted-foreground">{activeDelivery.dropoff}</p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -174,7 +193,7 @@ const ActiveDelivery = () => {
           {/* Earnings */}
           <div className="flex items-center justify-between bg-earnings/10 rounded-xl px-4 py-3">
             <span className="text-sm text-muted-foreground">Earnings</span>
-            <span className="text-lg font-bold text-earnings">₦650</span>
+            <span className="text-lg font-bold text-earnings">₦{activeDelivery.earning}</span>
           </div>
 
           {/* Action button */}
@@ -188,9 +207,10 @@ const ActiveDelivery = () => {
           ) : (
             <Link
               to="/"
+              onClick={endDelivery}
               className="thumb-zone w-full py-4 rounded-xl bg-earnings text-earnings-foreground font-bold text-base text-center block active:animate-press"
             >
-              ₦650 Earned — Back to Home
+              ₦{activeDelivery.earning} Earned — Back to Home
             </Link>
           )}
 

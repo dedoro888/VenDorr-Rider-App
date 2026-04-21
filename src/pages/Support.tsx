@@ -1,10 +1,13 @@
-import { ArrowLeft, MessageCircle, HelpCircle, Phone, CreditCard, Package, User, ChevronRight } from "lucide-react";
+import { ArrowLeft, MessageCircle, HelpCircle, Phone, CreditCard, Package, User, ChevronRight, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 
+const SUPPORT_PHONE = "+2348147131630";
+
 const issueCategories = [
-  { icon: CreditCard, label: "Payment Issue", desc: "Missing earnings, failed withdrawal" },
-  { icon: Package, label: "Delivery Issue", desc: "Order problems, route issues" },
-  { icon: User, label: "Account Issue", desc: "Profile, verification, suspension" },
+  { slug: "payment", icon: CreditCard, label: "Payment Issue", desc: "Missing earnings, failed withdrawal" },
+  { slug: "delivery", icon: Package, label: "Delivery Issue", desc: "Order problems, route issues" },
+  { slug: "account", icon: User, label: "Account Issue", desc: "Profile, verification, suspension" },
+  { slug: "account-changes", icon: Settings, label: "Request Account Changes", desc: "Vehicle or payout changes beyond limit" },
 ];
 
 const faqs = [
@@ -25,24 +28,34 @@ const Support = () => {
 
       {/* Quick actions */}
       <div className="px-5 mb-6 space-y-2">
-        <button className="thumb-zone w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold text-base flex items-center justify-center gap-2 active:animate-press">
+        <Link
+          to="/support/chat"
+          className="thumb-zone w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold text-base flex items-center justify-center gap-2 active:animate-press"
+        >
           <MessageCircle className="w-5 h-5" />
           Start Live Chat
-        </button>
-        <button className="thumb-zone w-full py-4 rounded-xl bg-card border border-border text-foreground font-bold text-base flex items-center justify-center gap-2 active:animate-press">
+        </Link>
+        <a
+          href={`tel:${SUPPORT_PHONE}`}
+          className="thumb-zone w-full py-4 rounded-xl bg-card border border-border text-foreground font-bold text-base flex items-center justify-center gap-2 active:animate-press"
+        >
           <Phone className="w-5 h-5" />
           Call Support
-        </button>
+        </a>
       </div>
 
       {/* Issue categories */}
       <div className="px-5 mb-6">
         <p className="text-sm font-semibold text-foreground mb-3">Report an Issue</p>
         <div className="space-y-2">
-          {issueCategories.map((cat, i) => {
+          {issueCategories.map((cat) => {
             const Icon = cat.icon;
             return (
-              <button key={i} className="w-full flex items-center gap-3 p-4 bg-card rounded-xl border border-border active:animate-press text-left">
+              <Link
+                key={cat.slug}
+                to={`/support/issue/${cat.slug}`}
+                className="w-full flex items-center gap-3 p-4 bg-card rounded-xl border border-border active:animate-press text-left"
+              >
                 <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center shrink-0">
                   <Icon className="w-4 h-4 text-secondary-foreground" />
                 </div>
@@ -51,7 +64,7 @@ const Support = () => {
                   <p className="text-xs text-muted-foreground">{cat.desc}</p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
-              </button>
+              </Link>
             );
           })}
         </div>
