@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Navigation } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useRider } from "@/contexts/RiderContext";
@@ -9,9 +10,21 @@ import { useRider } from "@/contexts/RiderContext";
 const ActiveDeliveryBar = () => {
   const { activeDelivery } = useRider();
   const location = useLocation();
+  const visible = !!activeDelivery && location.pathname !== "/delivery";
 
-  if (!activeDelivery) return null;
-  if (location.pathname === "/delivery") return null;
+  // Reserve space at the bottom of the viewport so fixed bar doesn't cover content.
+  useEffect(() => {
+    if (visible) {
+      document.body.style.paddingBottom = "5.5rem";
+    } else {
+      document.body.style.paddingBottom = "";
+    }
+    return () => {
+      document.body.style.paddingBottom = "";
+    };
+  }, [visible]);
+
+  if (!visible || !activeDelivery) return null;
 
   return (
     <div className="fixed bottom-16 inset-x-0 z-40 px-3 pb-2 pointer-events-none">
