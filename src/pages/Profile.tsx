@@ -3,6 +3,8 @@ import { Star, Bike, CreditCard, HelpCircle, LogOut, ChevronRight, Trash2, Sun, 
 import { Link } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
 import BottomNav from "@/components/rider/BottomNav";
+import { getVehicleLastEdit } from "./EditVehicle";
+import { getPaymentLastEdit } from "./EditPayment";
 
 const deliveryHistory = [
   { id: "VD-1042", status: "Completed", earnings: 650, date: "Apr 10, 2026", vendor: "Chicken Republic", pickup: "SUB, Main Campus", dropoff: "Hall 3, Room 214", distance: "2.4 km", time: "2:34 PM", items: "2 meals" },
@@ -20,13 +22,21 @@ const Profile = () => {
   const [showPayment, setShowPayment] = useState(false);
   const [showVehicle, setShowVehicle] = useState(false);
   const [selectedDelivery, setSelectedDelivery] = useState<typeof deliveryHistory[0] | null>(null);
-  const [paymentLastEdit] = useState("Mar 10, 2026");
-  const [vehicleLastEdit] = useState("Feb 15, 2026");
 
-  const paymentNextEdit = "Apr 10, 2026";
-  const vehicleNextEdit = "Mar 15, 2026";
-  const canEditPayment = true;
-  const canEditVehicle = true;
+  const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+  const formatDate = (ts: number) => new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+
+  const paymentLastTs = getPaymentLastEdit();
+  const vehicleLastTs = getVehicleLastEdit();
+
+  // First-time setup → always editable. Otherwise editable when last edit > 30 days ago.
+  const canEditPayment = paymentLastTs == null || Date.now() - paymentLastTs > THIRTY_DAYS;
+  const canEditVehicle = vehicleLastTs == null || Date.now() - vehicleLastTs > THIRTY_DAYS;
+
+  const paymentLastEdit = paymentLastTs ? formatDate(paymentLastTs) : "Never";
+  const vehicleLastEdit = vehicleLastTs ? formatDate(vehicleLastTs) : "Never";
+  const paymentNextEdit = paymentLastTs ? formatDate(paymentLastTs + THIRTY_DAYS) : "Now";
+  const vehicleNextEdit = vehicleLastTs ? formatDate(vehicleLastTs + THIRTY_DAYS) : "Now";
 
   const filteredHistory = deliveryHistory.filter(d =>
     d.id.toLowerCase().includes(searchQuery.toLowerCase())
@@ -134,10 +144,23 @@ const Profile = () => {
               <span className="text-xs text-muted-foreground">Color</span>
               <span className="text-xs font-medium text-foreground">Black</span>
             </div>
-            {canEditVehicle && (
-              <button className="thumb-zone w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm active:animate-press">
+            {canEditVehicle ? (
+              <Link
+                to="/profile/vehicle"
+                className="thumb-zone w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center active:animate-press"
+              >
                 Edit Vehicle Details
-              </button>
+              </Link>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground text-center">You can only update this once per month</p>
+                <Link
+                  to="/support/issue/account-changes"
+                  className="thumb-zone w-full py-3 rounded-xl bg-secondary text-secondary-foreground font-semibold text-sm flex items-center justify-center active:animate-press"
+                >
+                  Contact Support
+                </Link>
+              </div>
             )}
           </div>
         </div>
@@ -177,10 +200,23 @@ const Profile = () => {
               <span className="text-xs text-muted-foreground">Account Name</span>
               <span className="text-xs font-medium text-foreground">Adebayo Olatunji</span>
             </div>
-            {canEditPayment && (
-              <button className="thumb-zone w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm active:animate-press">
+            {canEditPayment ? (
+              <Link
+                to="/profile/payment"
+                className="thumb-zone w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center active:animate-press"
+              >
                 Edit Payment Details
-              </button>
+              </Link>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground text-center">You can only update this once per month</p>
+                <Link
+                  to="/support/issue/account-changes"
+                  className="thumb-zone w-full py-3 rounded-xl bg-secondary text-secondary-foreground font-semibold text-sm flex items-center justify-center active:animate-press"
+                >
+                  Contact Support
+                </Link>
+              </div>
             )}
           </div>
         </div>
