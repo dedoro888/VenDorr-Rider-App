@@ -134,8 +134,8 @@ const ActiveDelivery = () => {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Vendor</p>
-                <p className="text-sm font-semibold text-foreground">Chicken Republic</p>
-                <p className="text-xs text-muted-foreground">SUB, Main Campus</p>
+                <p className="text-sm font-semibold text-foreground">{activeDelivery.vendor}</p>
+                <p className="text-xs text-muted-foreground">{activeDelivery.pickup}</p>
               </div>
             </div>
             <button className="thumb-zone w-10 h-10 rounded-full bg-secondary flex items-center justify-center active:animate-press">
@@ -153,8 +153,8 @@ const ActiveDelivery = () => {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Customer</p>
-                <p className="text-sm font-semibold text-foreground">Adewale J.</p>
-                <p className="text-xs text-muted-foreground">Hall 3, Room 214</p>
+                <p className="text-sm font-semibold text-foreground">Customer</p>
+                <p className="text-xs text-muted-foreground">{activeDelivery.dropoff}</p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -193,7 +193,7 @@ const ActiveDelivery = () => {
           {/* Earnings */}
           <div className="flex items-center justify-between bg-earnings/10 rounded-xl px-4 py-3">
             <span className="text-sm text-muted-foreground">Earnings</span>
-            <span className="text-lg font-bold text-earnings">₦650</span>
+            <span className="text-lg font-bold text-earnings">₦{activeDelivery.earning}</span>
           </div>
 
           {/* Action button */}
