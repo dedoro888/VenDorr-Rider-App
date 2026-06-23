@@ -141,9 +141,9 @@ const Index = () => {
           <div className="mb-3">
             <DeliveryFilters active={filter} onChange={setFilter} />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 stagger-children" key={filter}>
             {filteredDeliveries.map((d) => (
-              <div key={d.id} className="bg-card rounded-xl border border-border overflow-hidden transition-all duration-300">
+              <div key={d.id} className="bg-card rounded-xl border border-border overflow-hidden transition-all duration-300 tap-scale">
                 <button
                   onClick={() => setExpandedId(expandedId === d.id ? null : d.id)}
                   className="w-full flex items-center gap-3 p-4 active:animate-press text-left"
