@@ -10,15 +10,13 @@ const StatusBadge = () => {
   return (
     <div className="fixed top-3 right-3 z-50 pointer-events-none">
       <div
-        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-md border text-[11px] font-semibold shadow-sm ${
-          isOnline
-            ? "bg-primary/15 border-primary/40 text-primary"
-            : "bg-card/80 border-border text-muted-foreground"
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold ${
+          isOnline ? "glass-primary text-primary-foreground" : "glass text-muted-foreground"
         }`}
       >
         <span
           className={`w-2 h-2 rounded-full ${
-            isOnline ? "bg-primary animate-pulse" : "bg-muted-foreground"
+            isOnline ? "bg-primary-foreground animate-pulse" : "bg-muted-foreground"
           }`}
         />
         {isOnline ? "Online" : "Offline"}
