@@ -200,7 +200,7 @@ const ActiveDelivery = () => {
           {!isCompleted ? (
             <button
               onClick={advance}
-              className="thumb-zone w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold text-base active:animate-press transition-all"
+              className="thumb-zone w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold text-base tap-scale active:animate-press transition-all"
             >
               {stageButtons[currentStage]}
             </button>
