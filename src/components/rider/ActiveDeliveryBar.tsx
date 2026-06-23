@@ -27,12 +27,12 @@ const ActiveDeliveryBar = () => {
   if (!visible || !activeDelivery) return null;
 
   return (
-    <div className="fixed bottom-16 inset-x-0 z-40 px-3 pb-2 pointer-events-none">
+    <div className="fixed bottom-20 inset-x-0 z-40 px-3 pb-2 pointer-events-none">
       <Link
         to="/delivery"
-        className="pointer-events-auto flex items-center gap-3 max-w-md mx-auto px-4 py-3 rounded-2xl bg-primary text-primary-foreground shadow-lg active:animate-press"
+        className="pointer-events-auto flex items-center gap-3 max-w-md mx-auto px-4 py-3 rounded-2xl glass-primary text-primary-foreground active:animate-press"
       >
-        <div className="w-9 h-9 rounded-full bg-primary-foreground/15 flex items-center justify-center shrink-0">
+        <div className="w-9 h-9 rounded-full bg-primary-foreground/20 flex items-center justify-center shrink-0">
           <Navigation className="w-4 h-4" />
         </div>
         <div className="flex-1 min-w-0">
