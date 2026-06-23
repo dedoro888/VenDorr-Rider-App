@@ -116,7 +116,7 @@ const ActiveDelivery = () => {
 
       {/* Order details */}
       <div className="px-5 -mt-4 relative z-10">
-        <div className="bg-card rounded-2xl border border-border p-5 shadow-lg space-y-5">
+        <div className="bg-card rounded-2xl border border-border p-5 shadow-lg space-y-5 animate-slide-up">
           {/* Progress tracker */}
           <DeliveryStatus currentStage={currentStage} />
 
@@ -172,7 +172,7 @@ const ActiveDelivery = () => {
           {/* Order items */}
           <div>
             <p className="text-xs text-muted-foreground mb-2">Order Items</p>
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 stagger-children">
               {orderItems.map((item, i) => (
                 <div key={i} className="flex justify-between items-center">
                   <span className="text-sm text-foreground">{item.name}</span>
@@ -200,7 +200,7 @@ const ActiveDelivery = () => {
           {!isCompleted ? (
             <button
               onClick={advance}
-              className="thumb-zone w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold text-base active:animate-press transition-all"
+              className="thumb-zone w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold text-base tap-scale active:animate-press transition-all"
             >
               {stageButtons[currentStage]}
             </button>

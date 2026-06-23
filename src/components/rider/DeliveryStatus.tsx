@@ -15,44 +15,54 @@ interface DeliveryStatusProps {
 }
 
 const DeliveryStatus = ({ currentStage }: DeliveryStatusProps) => {
-  const currentIndex = stages.findIndex(s => s.key === currentStage);
+  const currentIndex = stages.findIndex((s) => s.key === currentStage);
+  const progress = currentIndex / (stages.length - 1);
 
   return (
-    <div className="flex items-center justify-between px-2">
-      {stages.map((stage, i) => {
-        const Icon = stage.icon;
-        const isActive = i === currentIndex;
-        const isCompleted = i < currentIndex;
+    <div className="relative pt-1">
+      {/* Track */}
+      <div className="absolute left-[18px] right-[18px] top-[19px] h-1 rounded-full bg-border overflow-hidden">
+        <div
+          className="h-full rounded-full bg-primary transition-[width] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]"
+          style={{ width: `${progress * 100}%` }}
+        />
+      </div>
 
-        return (
-          <div key={stage.key} className="flex flex-col items-center relative">
-            {/* Connector line */}
-            {i > 0 && (
-              <div className="absolute right-full top-4 w-8 sm:w-12 h-0.5">
-                <div className={`h-full rounded-full transition-all duration-500 ${
-                  isCompleted || isActive ? "bg-primary" : "bg-border"
-                }`} />
+      {/* Nodes */}
+      <div className="relative flex items-start justify-between">
+        {stages.map((stage, i) => {
+          const Icon = stage.icon;
+          const isActive = i === currentIndex;
+          const isCompleted = i < currentIndex;
+
+          return (
+            <div key={stage.key} className="flex flex-col items-center gap-1.5 w-9">
+              <div
+                className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                  isActive
+                    ? "bg-primary text-primary-foreground border-primary scale-110 animate-pulse-glow"
+                    : isCompleted
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card text-muted-foreground border-border"
+                }`}
+              >
+                <Icon className="w-4 h-4 transition-transform duration-300" />
               </div>
-            )}
-            <div
-              className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-500 ${
-                isActive
-                  ? "bg-primary text-primary-foreground scale-110 glow-online"
-                  : isCompleted
-                  ? "bg-primary/20 text-primary"
-                  : "bg-secondary text-muted-foreground"
-              }`}
-            >
-              <Icon className="w-4 h-4" />
+              <span
+                className={`text-[10px] font-medium text-center leading-tight transition-colors duration-300 ${
+                  isActive
+                    ? "text-primary"
+                    : isCompleted
+                    ? "text-foreground"
+                    : "text-muted-foreground"
+                }`}
+              >
+                {stage.label}
+              </span>
             </div>
-            <span className={`text-[10px] mt-1.5 font-medium text-center leading-tight ${
-              isActive ? "text-primary" : isCompleted ? "text-foreground" : "text-muted-foreground"
-            }`}>
-              {stage.label}
-            </span>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 };
