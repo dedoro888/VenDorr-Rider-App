@@ -11,8 +11,8 @@ const BottomNav = () => {
   const location = useLocation();
 
   return (
-    <nav className="fixed bottom-3 inset-x-3 z-40 glass rounded-full safe-bottom">
-      <div className="flex items-center justify-around py-2 px-2">
+    <nav className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 glass rounded-full safe-bottom w-auto">
+      <div className="flex items-center justify-center gap-1 py-2 px-3">
         {tabs.map(tab => {
           const active = location.pathname === tab.path;
           const Icon = tab.icon;
@@ -20,7 +20,7 @@ const BottomNav = () => {
             <Link
               key={tab.path}
               to={tab.path}
-              className={`thumb-zone flex flex-col items-center justify-center gap-0.5 px-5 py-1 rounded-full transition-all ${
+              className={`thumb-zone flex flex-col items-center justify-center gap-0.5 px-4 py-1 rounded-full transition-all ${
                 active
                   ? "text-primary-foreground glass-primary"
                   : "text-muted-foreground"
