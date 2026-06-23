@@ -116,7 +116,7 @@ const ActiveDelivery = () => {
 
       {/* Order details */}
       <div className="px-5 -mt-4 relative z-10">
-        <div className="bg-card rounded-2xl border border-border p-5 shadow-lg space-y-5">
+        <div className="bg-card rounded-2xl border border-border p-5 shadow-lg space-y-5 animate-slide-up">
           {/* Progress tracker */}
           <DeliveryStatus currentStage={currentStage} />
 
