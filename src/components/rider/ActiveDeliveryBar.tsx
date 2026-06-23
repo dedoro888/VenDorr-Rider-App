@@ -27,7 +27,7 @@ const ActiveDeliveryBar = () => {
   if (!visible || !activeDelivery) return null;
 
   return (
-    <div className="fixed bottom-16 inset-x-0 z-40 px-3 pb-2 pointer-events-none">
+    <div className="fixed bottom-20 inset-x-0 z-40 px-3 pb-2 pointer-events-none">
       <Link
         to="/delivery"
         className="pointer-events-auto flex items-center gap-3 max-w-md mx-auto px-4 py-3 rounded-2xl glass-primary text-primary-foreground active:animate-press"
