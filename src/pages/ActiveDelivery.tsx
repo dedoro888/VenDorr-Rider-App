@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Phone, MessageSquare, MapPin, Navigation, Clock, Route, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Phone, MessageSquare, MapPin, Navigation, Clock, Route, AlertTriangle, X, ShieldCheck } from "lucide-react";
 import { Link, Navigate } from "react-router-dom";
 import DeliveryStatus, { type Stage } from "@/components/rider/DeliveryStatus";
 import GoogleMapView from "@/components/rider/GoogleMapView";
 import BottomNav from "@/components/rider/BottomNav";
+import GlassKeypad from "@/components/rider/GlassKeypad";
 import { useRider } from "@/contexts/RiderContext";
 
 const stageFlow: Stage[] = ["assigned", "at_vendor", "picked_up", "delivering", "completed"];
@@ -38,6 +39,12 @@ const ActiveDelivery = () => {
   const { activeDelivery, updateDeliveryStage, endDelivery } = useRider();
   const [stageIndex, setStageIndex] = useState(activeDelivery?.stageIndex ?? 0);
 
+  // Customer confirmation code shown on the customer's app to verify completion.
+  const [completionCode] = useState(() => String(Math.floor(1000 + Math.random() * 9000)));
+  const [showCodeModal, setShowCodeModal] = useState(false);
+  const [codeValue, setCodeValue] = useState("");
+  const [codeError, setCodeError] = useState(false);
+
   // Sync persisted stage on mount/changes
   useEffect(() => {
     if (activeDelivery && activeDelivery.stageIndex !== stageIndex) {
@@ -55,11 +62,33 @@ const ActiveDelivery = () => {
   const isPastPickup = stageIndex >= 2;
 
   const advance = () => {
+    // Final delivery step requires the customer's confirmation code.
+    if (currentStage === "delivering") {
+      setCodeValue("");
+      setCodeError(false);
+      setShowCodeModal(true);
+      return;
+    }
     if (stageIndex < stageFlow.length - 1) {
       const next = stageIndex + 1;
       setStageIndex(next);
       updateDeliveryStage(next);
     }
+  };
+
+  const verifyCompletionCode = (code: string) => {
+    if (code !== completionCode) {
+      setCodeError(true);
+      setTimeout(() => {
+        setCodeError(false);
+        setCodeValue("");
+      }, 700);
+      return;
+    }
+    const next = stageIndex + 1;
+    setStageIndex(next);
+    updateDeliveryStage(next);
+    setShowCodeModal(false);
   };
 
   // Map markers based on current stage
