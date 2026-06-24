@@ -1,6 +1,7 @@
-import { Wallet, ArrowDownToLine, ChevronDown, ChevronUp, TrendingUp, Calendar } from "lucide-react";
+import { Wallet, ArrowDownToLine, ChevronDown, ChevronUp, TrendingUp, Calendar, X, Building2, CheckCircle2, Lock } from "lucide-react";
 import { useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
+import { toast } from "@/hooks/use-toast";
 import BottomNav from "@/components/rider/BottomNav";
 
 const dailyData = [
@@ -53,9 +54,55 @@ const transactions = [
 
 const periods = ["daily", "weekly", "monthly", "yearly"] as const;
 
+const BALANCE = 12850;
+const FEE_RATE = 0.05;
+const BANK = { name: "GTBank", masked: "••••••4521", account: "Adebayo Olatunji" };
+
 const Earnings = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [period, setPeriod] = useState<typeof periods[number]>("daily");
+  const [withdrawStep, setWithdrawStep] = useState<0 | 1 | 2 | 3 | 4>(0);
+  const [amount, setAmount] = useState("");
+  const [pin, setPin] = useState("");
+
+  const amountNum = parseFloat(amount) || 0;
+  const fee = Math.round(amountNum * FEE_RATE);
+  const netAmount = amountNum - fee;
+
+  const resetWithdraw = () => {
+    setWithdrawStep(0);
+    setAmount("");
+    setPin("");
+  };
+
+  const goToPin = () => {
+    if (amountNum <= 0) {
+      toast({ title: "Enter an amount", description: "Please enter how much you want to withdraw.", variant: "destructive" });
+      return;
+    }
+    if (amountNum < 500) {
+      toast({ title: "Minimum is ₦500", description: "Withdrawals must be at least ₦500.", variant: "destructive" });
+      return;
+    }
+    if (amountNum > BALANCE) {
+      toast({ title: "Insufficient balance", description: `You can withdraw up to ₦${BALANCE.toLocaleString()}.`, variant: "destructive" });
+      return;
+    }
+    setWithdrawStep(2);
+  };
+
+  const confirmPin = () => {
+    if (pin.length !== 4) {
+      toast({ title: "Invalid PIN", description: "Enter your 4-digit transaction PIN.", variant: "destructive" });
+      return;
+    }
+    setWithdrawStep(3);
+  };
+
+  const finalizeWithdraw = () => {
+    setWithdrawStep(4);
+    toast({ title: "Withdrawal requested", description: `₦${netAmount.toLocaleString()} is on its way to ${BANK.name}.` });
+  };
 
   const chartData = chartDataMap[period];
   const totalEarnings = chartData.reduce((s, d) => s + d.amount, 0);
@@ -90,7 +137,10 @@ const Earnings = () => {
         </div>
 
         {/* Withdraw */}
-        <button className="thumb-zone w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold text-base flex items-center justify-center gap-2 active:animate-press">
+        <button
+          onClick={() => setWithdrawStep(1)}
+          className="thumb-zone w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold text-base flex items-center justify-center gap-2 active:animate-press"
+        >
           <ArrowDownToLine className="w-5 h-5" />
           Withdraw Funds
         </button>
@@ -181,6 +231,129 @@ const Earnings = () => {
           </div>
         )}
       </div>
+
+      {/* Withdraw modal */}
+      {withdrawStep !== 0 && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-end justify-center p-5">
+          <div className="w-full max-w-sm bg-card rounded-2xl border border-border p-6 space-y-4 animate-slide-up">
+            {/* Step 1: amount */}
+            {withdrawStep === 1 && (
+              <>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-foreground">Withdraw Funds</h3>
+                  <button onClick={resetWithdraw} className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                    <X className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground">Available balance: <span className="font-bold text-earnings">₦{BALANCE.toLocaleString()}</span></p>
+                <div>
+                  <label className="text-xs text-muted-foreground font-medium">Amount to withdraw</label>
+                  <div className="mt-1 flex items-center px-4 rounded-xl bg-secondary border border-border focus-within:ring-2 focus-within:ring-primary">
+                    <span className="text-lg font-bold text-foreground">₦</span>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      value={amount}
+                      onChange={e => setAmount(e.target.value)}
+                      placeholder="0"
+                      className="w-full bg-transparent py-3 px-2 text-lg font-bold text-foreground focus:outline-none"
+                    />
+                  </div>
+                </div>
+                {amountNum > 0 && (
+                  <div className="bg-secondary/50 rounded-xl p-3 space-y-2 animate-fade-in">
+                    <div className="flex justify-between text-xs"><span className="text-muted-foreground">Withdrawal amount</span><span className="font-medium text-foreground">₦{amountNum.toLocaleString()}</span></div>
+                    <div className="flex justify-between text-xs"><span className="text-muted-foreground">Service fee (5%)</span><span className="font-medium text-destructive">- ₦{fee.toLocaleString()}</span></div>
+                    <div className="border-t border-border pt-2 flex justify-between text-sm"><span className="font-semibold text-foreground">You receive</span><span className="font-bold text-earnings">₦{netAmount.toLocaleString()}</span></div>
+                  </div>
+                )}
+                <div className="flex items-center gap-3 bg-secondary/50 rounded-xl p-3">
+                  <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                    <Building2 className="w-4 h-4 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold text-foreground">{BANK.name} {BANK.masked}</p>
+                    <p className="text-[11px] text-muted-foreground">{BANK.account}</p>
+                  </div>
+                </div>
+                <button onClick={goToPin} className="thumb-zone w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold text-base active:animate-press">
+                  Continue
+                </button>
+              </>
+            )}
+
+            {/* Step 2: PIN */}
+            {withdrawStep === 2 && (
+              <>
+                <div className="flex items-center justify-between">
+                  <button onClick={() => setWithdrawStep(1)} className="text-xs font-medium text-muted-foreground">← Back</button>
+                  <button onClick={resetWithdraw} className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                    <X className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <div className="w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center">
+                    <Lock className="w-7 h-7 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-bold text-foreground">Transaction PIN</h3>
+                  <p className="text-xs text-muted-foreground">Enter your 4-digit PIN to authorize this withdrawal.</p>
+                </div>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={pin}
+                  onChange={e => setPin(e.target.value.replace(/\D/g, ""))}
+                  placeholder="••••"
+                  className="w-full text-center tracking-[1rem] text-2xl font-bold py-3 rounded-xl bg-secondary border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <button onClick={confirmPin} className="thumb-zone w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold text-base active:animate-press">
+                  Confirm PIN
+                </button>
+              </>
+            )}
+
+            {/* Step 3: confirm details */}
+            {withdrawStep === 3 && (
+              <>
+                <div className="flex items-center justify-between">
+                  <button onClick={() => setWithdrawStep(2)} className="text-xs font-medium text-muted-foreground">← Back</button>
+                  <button onClick={resetWithdraw} className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                    <X className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
+                <h3 className="text-lg font-bold text-foreground">Confirm Withdrawal</h3>
+                <div className="bg-secondary/50 rounded-xl p-4 space-y-3">
+                  <div className="flex justify-between text-xs"><span className="text-muted-foreground">Amount</span><span className="font-medium text-foreground">₦{amountNum.toLocaleString()}</span></div>
+                  <div className="flex justify-between text-xs"><span className="text-muted-foreground">Service fee (5%)</span><span className="font-medium text-destructive">- ₦{fee.toLocaleString()}</span></div>
+                  <div className="border-t border-border pt-2 flex justify-between text-sm"><span className="font-semibold text-foreground">You receive</span><span className="font-bold text-earnings">₦{netAmount.toLocaleString()}</span></div>
+                  <div className="border-t border-border pt-2 flex justify-between text-xs"><span className="text-muted-foreground">Bank</span><span className="font-medium text-foreground">{BANK.name} {BANK.masked}</span></div>
+                  <div className="flex justify-between text-xs"><span className="text-muted-foreground">Account name</span><span className="font-medium text-foreground">{BANK.account}</span></div>
+                </div>
+                <button onClick={finalizeWithdraw} className="thumb-zone w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold text-base active:animate-press">
+                  Confirm & Withdraw
+                </button>
+              </>
+            )}
+
+            {/* Step 4: success */}
+            {withdrawStep === 4 && (
+              <div className="flex flex-col items-center gap-3 text-center py-2">
+                <div className="w-16 h-16 rounded-full bg-primary/15 flex items-center justify-center animate-pop-in">
+                  <CheckCircle2 className="w-9 h-9 text-primary" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground">Withdrawal Successful</h3>
+                <p className="text-sm text-muted-foreground">
+                  ₦{netAmount.toLocaleString()} will be sent to {BANK.name} {BANK.masked}. This usually takes a few minutes.
+                </p>
+                <button onClick={resetWithdraw} className="thumb-zone w-full py-4 rounded-xl bg-secondary text-secondary-foreground font-bold text-base active:animate-press">
+                  Done
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <BottomNav />
     </div>

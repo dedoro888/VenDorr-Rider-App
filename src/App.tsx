@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { RiderProvider } from "@/contexts/RiderContext";
+import { ProfileProvider } from "@/contexts/ProfileContext";
 import StatusBadge from "@/components/rider/StatusBadge";
 import ActiveDeliveryBar from "@/components/rider/ActiveDeliveryBar";
 import Index from "./pages/Index.tsx";
@@ -26,6 +27,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <RiderProvider>
+        <ProfileProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -48,6 +50,7 @@ const App = () => (
             </Routes>
           </BrowserRouter>
         </TooltipProvider>
+        </ProfileProvider>
       </RiderProvider>
     </ThemeProvider>
   </QueryClientProvider>

@@ -1,7 +1,9 @@
-import { useState } from "react";
-import { Star, Bike, CreditCard, HelpCircle, LogOut, ChevronRight, Trash2, Sun, Moon, Monitor, Search, History, Shield, X, ChevronDown } from "lucide-react";
+import { useRef, useState } from "react";
+import { Star, Bike, CreditCard, HelpCircle, LogOut, ChevronRight, Trash2, Sun, Moon, Monitor, Search, History, Shield, X, ChevronDown, Camera, Pencil } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useProfile } from "@/contexts/ProfileContext";
+import { toast } from "@/hooks/use-toast";
 import BottomNav from "@/components/rider/BottomNav";
 import { getVehicleLastEdit } from "./EditVehicle";
 import { getPaymentLastEdit } from "./EditPayment";
@@ -16,12 +18,56 @@ const deliveryHistory = [
 
 const Profile = () => {
   const { theme, setTheme } = useTheme();
+  const { profile, updateProfile } = useProfile();
   const [showHistory, setShowHistory] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [showVehicle, setShowVehicle] = useState(false);
   const [selectedDelivery, setSelectedDelivery] = useState<typeof deliveryHistory[0] | null>(null);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [editName, setEditName] = useState(profile.name);
+  const [editPhone, setEditPhone] = useState(profile.phone);
+  const [editAvatar, setEditAvatar] = useState<string | null>(profile.avatar);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const initials = profile.name
+    .split(" ")
+    .map(n => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+  const openEdit = () => {
+    setEditName(profile.name);
+    setEditPhone(profile.phone);
+    setEditAvatar(profile.avatar);
+    setShowEditProfile(true);
+  };
+
+  const handleAvatarPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Image too large", description: "Please choose an image under 5MB.", variant: "destructive" });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setEditAvatar(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const saveProfile = () => {
+    const name = editName.trim();
+    const phone = editPhone.trim();
+    if (!name) {
+      toast({ title: "Name required", description: "Please enter your name.", variant: "destructive" });
+      return;
+    }
+    updateProfile({ name, phone, avatar: editAvatar });
+    setShowEditProfile(false);
+    toast({ title: "Profile updated", description: "Your profile changes have been saved." });
+  };
 
   const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
   const formatDate = (ts: number) => new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
@@ -53,18 +99,34 @@ const Profile = () => {
       {/* Profile header */}
       <div className="px-5 pt-6 pb-6">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-2xl font-bold text-primary">
-            AO
-          </div>
-          <div>
-            <h1 className="text-lg font-bold text-foreground">Adebayo Olatunji</h1>
-            <p className="text-sm text-muted-foreground">+234 812 345 6789</p>
+          <button onClick={openEdit} className="relative shrink-0 active:animate-press" aria-label="Edit profile picture">
+            {profile.avatar ? (
+              <img src={profile.avatar} alt={profile.name} className="w-16 h-16 rounded-full object-cover border border-border" />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-2xl font-bold text-primary">
+                {initials}
+              </div>
+            )}
+            <span className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-primary flex items-center justify-center border-2 border-background">
+              <Camera className="w-3 h-3 text-primary-foreground" />
+            </span>
+          </button>
+          <div className="flex-1">
+            <h1 className="text-lg font-bold text-foreground">{profile.name}</h1>
+            <p className="text-sm text-muted-foreground">{profile.phone}</p>
             <div className="flex items-center gap-1 mt-1">
               <Star className="w-3.5 h-3.5 text-earnings fill-earnings" />
               <span className="text-sm font-semibold text-earnings">4.8</span>
               <span className="text-xs text-muted-foreground">(142 deliveries)</span>
             </div>
           </div>
+          <button
+            onClick={openEdit}
+            className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center shrink-0 active:animate-press"
+            aria-label="Edit profile"
+          >
+            <Pencil className="w-4 h-4 text-secondary-foreground" />
+          </button>
         </div>
       </div>
 
@@ -372,6 +434,73 @@ const Profile = () => {
               className="thumb-zone w-full py-4 rounded-xl bg-secondary text-secondary-foreground font-bold text-base active:animate-press"
             >
               Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Edit profile modal */}
+      {showEditProfile && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-end justify-center p-5">
+          <div className="w-full max-w-sm bg-card rounded-2xl border border-border p-6 space-y-4 animate-slide-up">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-foreground">Edit Profile</h3>
+              <button onClick={() => setShowEditProfile(false)} className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="flex flex-col items-center gap-2">
+              <button onClick={() => fileRef.current?.click()} className="relative active:animate-press" aria-label="Change photo">
+                {editAvatar ? (
+                  <img src={editAvatar} alt="Preview" className="w-20 h-20 rounded-full object-cover border border-border" />
+                ) : (
+                  <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center text-2xl font-bold text-primary">
+                    {initials}
+                  </div>
+                )}
+                <span className="absolute -bottom-0.5 -right-0.5 w-7 h-7 rounded-full bg-primary flex items-center justify-center border-2 border-card">
+                  <Camera className="w-3.5 h-3.5 text-primary-foreground" />
+                </span>
+              </button>
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarPick} />
+              {editAvatar && (
+                <button onClick={() => setEditAvatar(null)} className="text-xs text-destructive font-medium">
+                  Remove photo
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-muted-foreground font-medium">Full Name</label>
+                <input
+                  type="text"
+                  value={editName}
+                  maxLength={60}
+                  onChange={e => setEditName(e.target.value)}
+                  className="mt-1 w-full px-4 py-3 rounded-xl bg-secondary border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Enter your name"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground font-medium">Phone Number</label>
+                <input
+                  type="tel"
+                  value={editPhone}
+                  maxLength={20}
+                  onChange={e => setEditPhone(e.target.value)}
+                  className="mt-1 w-full px-4 py-3 rounded-xl bg-secondary border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Enter your phone number"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={saveProfile}
+              className="thumb-zone w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold text-base active:animate-press"
+            >
+              Save Changes
             </button>
           </div>
         </div>
