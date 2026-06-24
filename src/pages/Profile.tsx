@@ -344,6 +344,57 @@ const Profile = () => {
         </div>
       </div>
 
+      {/* Security — Transaction PIN & Biometrics */}
+      <div className="px-5 mb-3">
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
+          <button
+            onClick={openPinSetup}
+            className="w-full flex items-center gap-3 p-4 active:animate-press text-left"
+          >
+            <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center shrink-0">
+              <KeyRound className="w-4 h-4 text-secondary-foreground" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-foreground">Transaction PIN</p>
+              <p className="text-xs text-muted-foreground">
+                {hasPin ? "PIN is set — tap to change" : "Create a 4-digit PIN for withdrawals"}
+              </p>
+            </div>
+            {hasPin ? (
+              <span className="text-[10px] font-semibold text-primary bg-primary/15 px-2 py-1 rounded-full">Active</span>
+            ) : (
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            )}
+          </button>
+
+          <div className="h-px bg-border mx-4" />
+
+          <div className="w-full flex items-center gap-3 p-4 text-left">
+            <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center shrink-0">
+              <Fingerprint className="w-4 h-4 text-secondary-foreground" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-foreground">Fingerprint & Face ID</p>
+              <p className="text-xs text-muted-foreground">Confirm transactions with biometrics</p>
+            </div>
+            <button
+              onClick={toggleBiometric}
+              role="switch"
+              aria-checked={profile.biometricEnabled}
+              className={`relative w-12 h-7 rounded-full transition-colors duration-300 shrink-0 ${
+                profile.biometricEnabled ? "bg-primary" : "bg-secondary"
+              }`}
+            >
+              <span
+                className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-background shadow transition-transform duration-300 ${
+                  profile.biometricEnabled ? "translate-x-5" : ""
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Delivery History */}
       <div className="px-5 mb-3">
         <button
