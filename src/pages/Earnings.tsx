@@ -1,8 +1,11 @@
-import { Wallet, ArrowDownToLine, ChevronDown, ChevronUp, TrendingUp, Calendar, X, Building2, CheckCircle2, Lock } from "lucide-react";
+import { Wallet, ArrowDownToLine, ChevronDown, ChevronUp, TrendingUp, Calendar, X, Building2, CheckCircle2, Lock, Fingerprint } from "lucide-react";
 import { useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { toast } from "@/hooks/use-toast";
 import BottomNav from "@/components/rider/BottomNav";
+import GlassKeypad from "@/components/rider/GlassKeypad";
+import { useProfile } from "@/contexts/ProfileContext";
+import { confirmBiometric } from "@/lib/biometric";
 
 const dailyData = [
   { label: "Mon", amount: 3200 },
@@ -59,11 +62,13 @@ const FEE_RATE = 0.05;
 const BANK = { name: "GTBank", masked: "••••••4521", account: "Adebayo Olatunji" };
 
 const Earnings = () => {
+  const { profile, hasPin } = useProfile();
   const [showHistory, setShowHistory] = useState(false);
   const [period, setPeriod] = useState<typeof periods[number]>("daily");
   const [withdrawStep, setWithdrawStep] = useState<0 | 1 | 2 | 3 | 4>(0);
   const [amount, setAmount] = useState("");
   const [pin, setPin] = useState("");
+  const [pinError, setPinError] = useState(false);
 
   const amountNum = parseFloat(amount) || 0;
   const fee = Math.round(amountNum * FEE_RATE);
@@ -73,6 +78,7 @@ const Earnings = () => {
     setWithdrawStep(0);
     setAmount("");
     setPin("");
+    setPinError(false);
   };
 
   const goToPin = () => {
@@ -91,12 +97,25 @@ const Earnings = () => {
     setWithdrawStep(2);
   };
 
-  const confirmPin = () => {
-    if (pin.length !== 4) {
-      toast({ title: "Invalid PIN", description: "Enter your 4-digit transaction PIN.", variant: "destructive" });
+  const verifyPin = (code: string) => {
+    if (hasPin && code !== profile.pin) {
+      setPinError(true);
+      setTimeout(() => {
+        setPinError(false);
+        setPin("");
+      }, 700);
       return;
     }
+    setPin("");
     setWithdrawStep(3);
+  };
+
+  const useBiometric = async () => {
+    const ok = await confirmBiometric();
+    if (ok) {
+      setPin("");
+      setWithdrawStep(3);
+    }
   };
 
   const finalizeWithdraw = () => {
