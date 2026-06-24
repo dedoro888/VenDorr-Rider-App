@@ -439,6 +439,73 @@ const Profile = () => {
         </div>
       )}
 
+      {/* Edit profile modal */}
+      {showEditProfile && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-end justify-center p-5">
+          <div className="w-full max-w-sm bg-card rounded-2xl border border-border p-6 space-y-4 animate-slide-up">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-foreground">Edit Profile</h3>
+              <button onClick={() => setShowEditProfile(false)} className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="flex flex-col items-center gap-2">
+              <button onClick={() => fileRef.current?.click()} className="relative active:animate-press" aria-label="Change photo">
+                {editAvatar ? (
+                  <img src={editAvatar} alt="Preview" className="w-20 h-20 rounded-full object-cover border border-border" />
+                ) : (
+                  <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center text-2xl font-bold text-primary">
+                    {initials}
+                  </div>
+                )}
+                <span className="absolute -bottom-0.5 -right-0.5 w-7 h-7 rounded-full bg-primary flex items-center justify-center border-2 border-card">
+                  <Camera className="w-3.5 h-3.5 text-primary-foreground" />
+                </span>
+              </button>
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarPick} />
+              {editAvatar && (
+                <button onClick={() => setEditAvatar(null)} className="text-xs text-destructive font-medium">
+                  Remove photo
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-muted-foreground font-medium">Full Name</label>
+                <input
+                  type="text"
+                  value={editName}
+                  maxLength={60}
+                  onChange={e => setEditName(e.target.value)}
+                  className="mt-1 w-full px-4 py-3 rounded-xl bg-secondary border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Enter your name"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground font-medium">Phone Number</label>
+                <input
+                  type="tel"
+                  value={editPhone}
+                  maxLength={20}
+                  onChange={e => setEditPhone(e.target.value)}
+                  className="mt-1 w-full px-4 py-3 rounded-xl bg-secondary border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Enter your phone number"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={saveProfile}
+              className="thumb-zone w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold text-base active:animate-press"
+            >
+              Save Changes
+            </button>
+          </div>
+        </div>
+      )}
+
       <BottomNav />
     </div>
   );
