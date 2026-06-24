@@ -1,10 +1,12 @@
 import { useRef, useState } from "react";
-import { Star, Bike, CreditCard, HelpCircle, LogOut, ChevronRight, Trash2, Sun, Moon, Monitor, Search, History, Shield, X, ChevronDown, Camera, Pencil } from "lucide-react";
+import { Star, Bike, CreditCard, HelpCircle, LogOut, ChevronRight, Trash2, Sun, Moon, Monitor, Search, History, Shield, X, ChevronDown, Camera, Pencil, KeyRound, Fingerprint, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { toast } from "@/hooks/use-toast";
 import BottomNav from "@/components/rider/BottomNav";
+import GlassKeypad from "@/components/rider/GlassKeypad";
+import { isBiometricAvailable } from "@/lib/biometric";
 import { getVehicleLastEdit } from "./EditVehicle";
 import { getPaymentLastEdit } from "./EditPayment";
 
@@ -18,7 +20,7 @@ const deliveryHistory = [
 
 const Profile = () => {
   const { theme, setTheme } = useTheme();
-  const { profile, updateProfile } = useProfile();
+  const { profile, updateProfile, setPin: savePin, setBiometricEnabled, hasPin } = useProfile();
   const [showHistory, setShowHistory] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -30,6 +32,13 @@ const Profile = () => {
   const [editPhone, setEditPhone] = useState(profile.phone);
   const [editAvatar, setEditAvatar] = useState<string | null>(profile.avatar);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Transaction PIN setup
+  const [showPinSetup, setShowPinSetup] = useState(false);
+  const [pinStep, setPinStep] = useState<"enter" | "confirm">("enter");
+  const [firstPin, setFirstPin] = useState("");
+  const [pinValue, setPinValue] = useState("");
+  const [pinError, setPinError] = useState(false);
 
   const initials = profile.name
     .split(" ")
@@ -67,6 +76,57 @@ const Profile = () => {
     updateProfile({ name, phone, avatar: editAvatar });
     setShowEditProfile(false);
     toast({ title: "Profile updated", description: "Your profile changes have been saved." });
+  };
+
+  const openPinSetup = () => {
+    setPinStep("enter");
+    setFirstPin("");
+    setPinValue("");
+    setPinError(false);
+    setShowPinSetup(true);
+  };
+
+  const handlePinComplete = (code: string) => {
+    if (pinStep === "enter") {
+      setFirstPin(code);
+      setPinValue("");
+      setPinStep("confirm");
+      return;
+    }
+    // confirm step
+    if (code === firstPin) {
+      savePin(code);
+      setShowPinSetup(false);
+      toast({ title: hasPin ? "PIN updated" : "PIN created", description: "Your transaction PIN is now active." });
+    } else {
+      setPinError(true);
+      setTimeout(() => {
+        setPinError(false);
+        setPinValue("");
+        setFirstPin("");
+        setPinStep("enter");
+      }, 700);
+    }
+  };
+
+  const toggleBiometric = async () => {
+    if (profile.biometricEnabled) {
+      setBiometricEnabled(false);
+      toast({ title: "Biometrics disabled" });
+      return;
+    }
+    if (!hasPin) {
+      toast({ title: "Create a PIN first", description: "Set a transaction PIN before enabling biometrics.", variant: "destructive" });
+      return;
+    }
+    const available = await isBiometricAvailable();
+    setBiometricEnabled(true);
+    toast({
+      title: "Biometrics enabled",
+      description: available
+        ? "Use Face ID / fingerprint to confirm transactions."
+        : "Enabled. Falls back to PIN where biometrics aren't supported.",
+    });
   };
 
   const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
@@ -280,6 +340,57 @@ const Profile = () => {
                 </Link>
               </div>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Security — Transaction PIN & Biometrics */}
+      <div className="px-5 mb-3">
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
+          <button
+            onClick={openPinSetup}
+            className="w-full flex items-center gap-3 p-4 active:animate-press text-left"
+          >
+            <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center shrink-0">
+              <KeyRound className="w-4 h-4 text-secondary-foreground" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-foreground">Transaction PIN</p>
+              <p className="text-xs text-muted-foreground">
+                {hasPin ? "PIN is set — tap to change" : "Create a 4-digit PIN for withdrawals"}
+              </p>
+            </div>
+            {hasPin ? (
+              <span className="text-[10px] font-semibold text-primary bg-primary/15 px-2 py-1 rounded-full">Active</span>
+            ) : (
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            )}
+          </button>
+
+          <div className="h-px bg-border mx-4" />
+
+          <div className="w-full flex items-center gap-3 p-4 text-left">
+            <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center shrink-0">
+              <Fingerprint className="w-4 h-4 text-secondary-foreground" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-foreground">Fingerprint & Face ID</p>
+              <p className="text-xs text-muted-foreground">Confirm transactions with biometrics</p>
+            </div>
+            <button
+              onClick={toggleBiometric}
+              role="switch"
+              aria-checked={profile.biometricEnabled}
+              className={`relative w-12 h-7 rounded-full transition-colors duration-300 shrink-0 ${
+                profile.biometricEnabled ? "bg-primary" : "bg-secondary"
+              }`}
+            >
+              <span
+                className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-background shadow transition-transform duration-300 ${
+                  profile.biometricEnabled ? "translate-x-5" : ""
+                }`}
+              />
+            </button>
           </div>
         </div>
       </div>
@@ -502,6 +613,46 @@ const Profile = () => {
             >
               Save Changes
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Transaction PIN setup modal */}
+      {showPinSetup && (
+        <div className="fixed inset-0 z-50 glass flex flex-col animate-fade-in">
+          <div className="flex items-center justify-between px-5 pt-6">
+            <span className="text-sm font-medium text-muted-foreground">
+              {hasPin ? "Change PIN" : "Create PIN"}
+            </span>
+            <button
+              onClick={() => setShowPinSetup(false)}
+              className="w-9 h-9 rounded-full glass-key flex items-center justify-center"
+            >
+              <X className="w-4 h-4 text-foreground" />
+            </button>
+          </div>
+
+          <div className="flex-1 flex flex-col items-center justify-center px-8 gap-8">
+            <div className="text-center space-y-1">
+              <h3 className="text-xl font-bold text-foreground">
+                {pinStep === "enter" ? "Enter new PIN" : "Confirm your PIN"}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {pinError
+                  ? "PINs don't match — try again"
+                  : pinStep === "enter"
+                  ? "Choose a 4-digit transaction PIN"
+                  : "Re-enter the PIN to confirm"}
+              </p>
+            </div>
+
+            <GlassKeypad
+              value={pinValue}
+              onChange={setPinValue}
+              length={4}
+              onComplete={handlePinComplete}
+              error={pinError}
+            />
           </div>
         </div>
       )}

@@ -1,8 +1,11 @@
-import { Wallet, ArrowDownToLine, ChevronDown, ChevronUp, TrendingUp, Calendar, X, Building2, CheckCircle2, Lock } from "lucide-react";
+import { Wallet, ArrowDownToLine, ChevronDown, ChevronUp, TrendingUp, Calendar, X, Building2, CheckCircle2, Lock, Fingerprint } from "lucide-react";
 import { useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { toast } from "@/hooks/use-toast";
 import BottomNav from "@/components/rider/BottomNav";
+import GlassKeypad from "@/components/rider/GlassKeypad";
+import { useProfile } from "@/contexts/ProfileContext";
+import { confirmBiometric } from "@/lib/biometric";
 
 const dailyData = [
   { label: "Mon", amount: 3200 },
@@ -59,11 +62,13 @@ const FEE_RATE = 0.05;
 const BANK = { name: "GTBank", masked: "••••••4521", account: "Adebayo Olatunji" };
 
 const Earnings = () => {
+  const { profile, hasPin } = useProfile();
   const [showHistory, setShowHistory] = useState(false);
   const [period, setPeriod] = useState<typeof periods[number]>("daily");
   const [withdrawStep, setWithdrawStep] = useState<0 | 1 | 2 | 3 | 4>(0);
   const [amount, setAmount] = useState("");
   const [pin, setPin] = useState("");
+  const [pinError, setPinError] = useState(false);
 
   const amountNum = parseFloat(amount) || 0;
   const fee = Math.round(amountNum * FEE_RATE);
@@ -73,6 +78,7 @@ const Earnings = () => {
     setWithdrawStep(0);
     setAmount("");
     setPin("");
+    setPinError(false);
   };
 
   const goToPin = () => {
@@ -91,12 +97,25 @@ const Earnings = () => {
     setWithdrawStep(2);
   };
 
-  const confirmPin = () => {
-    if (pin.length !== 4) {
-      toast({ title: "Invalid PIN", description: "Enter your 4-digit transaction PIN.", variant: "destructive" });
+  const verifyPin = (code: string) => {
+    if (hasPin && code !== profile.pin) {
+      setPinError(true);
+      setTimeout(() => {
+        setPinError(false);
+        setPin("");
+      }, 700);
       return;
     }
+    setPin("");
     setWithdrawStep(3);
+  };
+
+  const useBiometric = async () => {
+    const ok = await confirmBiometric();
+    if (ok) {
+      setPin("");
+      setWithdrawStep(3);
+    }
   };
 
   const finalizeWithdraw = () => {
@@ -296,20 +315,34 @@ const Earnings = () => {
                     <Lock className="w-7 h-7 text-primary" />
                   </div>
                   <h3 className="text-lg font-bold text-foreground">Transaction PIN</h3>
-                  <p className="text-xs text-muted-foreground">Enter your 4-digit PIN to authorize this withdrawal.</p>
+                  <p className="text-xs text-muted-foreground">
+                    {pinError ? "Incorrect PIN — try again" : "Enter your 4-digit PIN to authorize this withdrawal."}
+                  </p>
                 </div>
-                <input
-                  type="password"
-                  inputMode="numeric"
-                  maxLength={4}
+                <GlassKeypad
                   value={pin}
-                  onChange={e => setPin(e.target.value.replace(/\D/g, ""))}
-                  placeholder="••••"
-                  className="w-full text-center tracking-[1rem] text-2xl font-bold py-3 rounded-xl bg-secondary border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  onChange={setPin}
+                  length={4}
+                  onComplete={verifyPin}
+                  error={pinError}
+                  leftAction={
+                    profile.biometricEnabled ? (
+                      <button
+                        type="button"
+                        onClick={useBiometric}
+                        aria-label="Use Face ID or fingerprint"
+                        className="glass-key thumb-zone w-[72px] h-[72px] rounded-full flex items-center justify-center transition-transform duration-150 active:scale-90"
+                      >
+                        <Fingerprint className="w-7 h-7 text-primary" />
+                      </button>
+                    ) : null
+                  }
                 />
-                <button onClick={confirmPin} className="thumb-zone w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold text-base active:animate-press">
-                  Confirm PIN
-                </button>
+                {!hasPin && (
+                  <p className="text-[11px] text-center text-muted-foreground">
+                    Tip: set a transaction PIN in Profile → Security for extra protection.
+                  </p>
+                )}
               </>
             )}
 
