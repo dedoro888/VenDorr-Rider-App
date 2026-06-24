@@ -260,6 +260,46 @@ const ActiveDelivery = () => {
       </div>
 
       <BottomNav />
+
+      {/* Delivery completion code (liquid glass) */}
+      {showCodeModal && (
+        <div className="fixed inset-0 z-50 glass flex flex-col animate-fade-in">
+          <div className="flex items-center justify-between px-5 pt-6">
+            <span className="text-sm font-medium text-muted-foreground">Confirm Delivery</span>
+            <button
+              onClick={() => setShowCodeModal(false)}
+              className="w-9 h-9 rounded-full glass-key flex items-center justify-center"
+            >
+              <X className="w-4 h-4 text-foreground" />
+            </button>
+          </div>
+
+          <div className="flex-1 flex flex-col items-center justify-center px-8 gap-8">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <div className="w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center">
+                <ShieldCheck className="w-7 h-7 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold text-foreground">Enter Delivery Code</h3>
+              <p className="text-sm text-muted-foreground max-w-xs">
+                {codeError
+                  ? "Incorrect code — please check with the customer"
+                  : "Ask the customer for the 4-digit code shown on their app to confirm completion."}
+              </p>
+              <span className="text-[11px] text-muted-foreground/70">
+                Demo code: <span className="font-bold tracking-widest text-foreground">{completionCode}</span>
+              </span>
+            </div>
+
+            <GlassKeypad
+              value={codeValue}
+              onChange={setCodeValue}
+              length={4}
+              onComplete={verifyCompletionCode}
+              error={codeError}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
