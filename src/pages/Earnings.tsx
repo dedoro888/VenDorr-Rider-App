@@ -315,20 +315,34 @@ const Earnings = () => {
                     <Lock className="w-7 h-7 text-primary" />
                   </div>
                   <h3 className="text-lg font-bold text-foreground">Transaction PIN</h3>
-                  <p className="text-xs text-muted-foreground">Enter your 4-digit PIN to authorize this withdrawal.</p>
+                  <p className="text-xs text-muted-foreground">
+                    {pinError ? "Incorrect PIN — try again" : "Enter your 4-digit PIN to authorize this withdrawal."}
+                  </p>
                 </div>
-                <input
-                  type="password"
-                  inputMode="numeric"
-                  maxLength={4}
+                <GlassKeypad
                   value={pin}
-                  onChange={e => setPin(e.target.value.replace(/\D/g, ""))}
-                  placeholder="••••"
-                  className="w-full text-center tracking-[1rem] text-2xl font-bold py-3 rounded-xl bg-secondary border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  onChange={setPin}
+                  length={4}
+                  onComplete={verifyPin}
+                  error={pinError}
+                  leftAction={
+                    profile.biometricEnabled ? (
+                      <button
+                        type="button"
+                        onClick={useBiometric}
+                        aria-label="Use Face ID or fingerprint"
+                        className="glass-key thumb-zone w-[72px] h-[72px] rounded-full flex items-center justify-center transition-transform duration-150 active:scale-90"
+                      >
+                        <Fingerprint className="w-7 h-7 text-primary" />
+                      </button>
+                    ) : null
+                  }
                 />
-                <button onClick={confirmPin} className="thumb-zone w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold text-base active:animate-press">
-                  Confirm PIN
-                </button>
+                {!hasPin && (
+                  <p className="text-[11px] text-center text-muted-foreground">
+                    Tip: set a transaction PIN in Profile → Security for extra protection.
+                  </p>
+                )}
               </>
             )}
 
