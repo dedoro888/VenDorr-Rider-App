@@ -1,10 +1,12 @@
 import { useRef, useState } from "react";
-import { Star, Bike, CreditCard, HelpCircle, LogOut, ChevronRight, Trash2, Sun, Moon, Monitor, Search, History, Shield, X, ChevronDown, Camera, Pencil } from "lucide-react";
+import { Star, Bike, CreditCard, HelpCircle, LogOut, ChevronRight, Trash2, Sun, Moon, Monitor, Search, History, Shield, X, ChevronDown, Camera, Pencil, KeyRound, Fingerprint, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { toast } from "@/hooks/use-toast";
 import BottomNav from "@/components/rider/BottomNav";
+import GlassKeypad from "@/components/rider/GlassKeypad";
+import { isBiometricAvailable } from "@/lib/biometric";
 import { getVehicleLastEdit } from "./EditVehicle";
 import { getPaymentLastEdit } from "./EditPayment";
 
@@ -18,7 +20,7 @@ const deliveryHistory = [
 
 const Profile = () => {
   const { theme, setTheme } = useTheme();
-  const { profile, updateProfile } = useProfile();
+  const { profile, updateProfile, setPin: savePin, setBiometricEnabled, hasPin } = useProfile();
   const [showHistory, setShowHistory] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -30,6 +32,13 @@ const Profile = () => {
   const [editPhone, setEditPhone] = useState(profile.phone);
   const [editAvatar, setEditAvatar] = useState<string | null>(profile.avatar);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Transaction PIN setup
+  const [showPinSetup, setShowPinSetup] = useState(false);
+  const [pinStep, setPinStep] = useState<"enter" | "confirm">("enter");
+  const [firstPin, setFirstPin] = useState("");
+  const [pinValue, setPinValue] = useState("");
+  const [pinError, setPinError] = useState(false);
 
   const initials = profile.name
     .split(" ")
@@ -67,6 +76,57 @@ const Profile = () => {
     updateProfile({ name, phone, avatar: editAvatar });
     setShowEditProfile(false);
     toast({ title: "Profile updated", description: "Your profile changes have been saved." });
+  };
+
+  const openPinSetup = () => {
+    setPinStep("enter");
+    setFirstPin("");
+    setPinValue("");
+    setPinError(false);
+    setShowPinSetup(true);
+  };
+
+  const handlePinComplete = (code: string) => {
+    if (pinStep === "enter") {
+      setFirstPin(code);
+      setPinValue("");
+      setPinStep("confirm");
+      return;
+    }
+    // confirm step
+    if (code === firstPin) {
+      savePin(code);
+      setShowPinSetup(false);
+      toast({ title: hasPin ? "PIN updated" : "PIN created", description: "Your transaction PIN is now active." });
+    } else {
+      setPinError(true);
+      setTimeout(() => {
+        setPinError(false);
+        setPinValue("");
+        setFirstPin("");
+        setPinStep("enter");
+      }, 700);
+    }
+  };
+
+  const toggleBiometric = async () => {
+    if (profile.biometricEnabled) {
+      setBiometricEnabled(false);
+      toast({ title: "Biometrics disabled" });
+      return;
+    }
+    if (!hasPin) {
+      toast({ title: "Create a PIN first", description: "Set a transaction PIN before enabling biometrics.", variant: "destructive" });
+      return;
+    }
+    const available = await isBiometricAvailable();
+    setBiometricEnabled(true);
+    toast({
+      title: "Biometrics enabled",
+      description: available
+        ? "Use Face ID / fingerprint to confirm transactions."
+        : "Enabled. Falls back to PIN where biometrics aren't supported.",
+    });
   };
 
   const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
