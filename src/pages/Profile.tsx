@@ -617,6 +617,46 @@ const Profile = () => {
         </div>
       )}
 
+      {/* Transaction PIN setup modal */}
+      {showPinSetup && (
+        <div className="fixed inset-0 z-50 glass flex flex-col animate-fade-in">
+          <div className="flex items-center justify-between px-5 pt-6">
+            <span className="text-sm font-medium text-muted-foreground">
+              {hasPin ? "Change PIN" : "Create PIN"}
+            </span>
+            <button
+              onClick={() => setShowPinSetup(false)}
+              className="w-9 h-9 rounded-full glass-key flex items-center justify-center"
+            >
+              <X className="w-4 h-4 text-foreground" />
+            </button>
+          </div>
+
+          <div className="flex-1 flex flex-col items-center justify-center px-8 gap-8">
+            <div className="text-center space-y-1">
+              <h3 className="text-xl font-bold text-foreground">
+                {pinStep === "enter" ? "Enter new PIN" : "Confirm your PIN"}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {pinError
+                  ? "PINs don't match — try again"
+                  : pinStep === "enter"
+                  ? "Choose a 4-digit transaction PIN"
+                  : "Re-enter the PIN to confirm"}
+              </p>
+            </div>
+
+            <GlassKeypad
+              value={pinValue}
+              onChange={setPinValue}
+              length={4}
+              onComplete={handlePinComplete}
+              error={pinError}
+            />
+          </div>
+        </div>
+      )}
+
       <BottomNav />
     </div>
   );
