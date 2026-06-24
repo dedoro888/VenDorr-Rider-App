@@ -11,7 +11,7 @@ const notifications = [
 
 const Notifications = () => {
   return (
-    <div className="min-h-screen pb-24 bg-background">
+    <div className="min-h-screen pb-32 bg-background">
       <div className="px-5 pt-6 pb-4 flex items-center justify-between">
         <h1 className="text-xl font-bold text-foreground">Notifications</h1>
         <div className="w-6 h-6 rounded-full bg-urgent flex items-center justify-center">
@@ -19,7 +19,7 @@ const Notifications = () => {
         </div>
       </div>
 
-      <div className="px-5 space-y-2">
+      <div className="px-5 space-y-2 stagger-children">
         {notifications.map((n, i) => {
           const Icon = n.icon;
           return (
