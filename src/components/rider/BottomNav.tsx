@@ -21,10 +21,12 @@ const BottomNav = () => {
       <div className="relative flex items-center justify-center p-2">
         {/* Animated sliding bubble */}
         <div
-          className="absolute top-2 bottom-2 glass-primary rounded-full transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] animate-pop-in"
+          className="absolute top-1.5 bottom-1.5 glass-primary rounded-[20px] animate-pop-in"
           style={{
             width: `${TAB_WIDTH}px`,
             transform: `translateX(${(activeIndex - 1) * TAB_WIDTH}px)`,
+            transition:
+              "transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.4s ease",
           }}
         />
         {tabs.map(tab => {
@@ -39,7 +41,11 @@ const BottomNav = () => {
                 active ? "text-primary-foreground" : "text-muted-foreground"
               }`}
             >
-              <Icon className={`w-5 h-5 transition-transform duration-300 ${active ? "scale-110" : ""}`} />
+              <Icon
+                className={`w-5 h-5 transition-transform duration-300 ${
+                  active ? "scale-110 -translate-y-0.5" : ""
+                }`}
+              />
               <span className="text-[10px] font-medium">{tab.label}</span>
             </Link>
           );
