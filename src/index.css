@@ -152,6 +152,27 @@
       0 8px 32px -8px hsl(220 20% 30% / 0.18),
       inset 0 1px 0 0 hsl(0 0% 100% / 0.7);
   }
+  /* Liquid-glass keypad keys (iOS lock-screen style) */
+  .glass-key {
+    background: hsl(var(--foreground) / 0.07);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid hsl(var(--foreground) / 0.14);
+    box-shadow:
+      inset 0 1px 0 0 hsl(var(--foreground) / 0.18),
+      inset 0 -1px 0 0 hsl(220 20% 0% / 0.18),
+      0 6px 16px -6px hsl(220 20% 0% / 0.35);
+  }
+  .glass-key:active {
+    background: hsl(var(--foreground) / 0.14);
+  }
+  .light .glass-key {
+    background: hsl(0 0% 100% / 0.45);
+    border: 1px solid hsl(0 0% 100% / 0.7);
+    box-shadow:
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.8),
+      0 6px 16px -6px hsl(220 20% 30% / 0.25);
+  }
 }
 
 @keyframes slide-up {
